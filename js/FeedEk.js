@@ -15,53 +15,46 @@
             DateFormat: "",
             DateFormatLang:"en"
         }, opt);
-        
+ 
         var id = $(this).attr("id"), i, s = "", dt;
         $("#" + id).empty();
         if (def.FeedUrl == undefined) return;       
         $("#" + id).append('<img src="loader.gif" />');
 
-        var YQLstr = 'SELECT channel.item FROM feednormalizer WHERE output="rss_2.0" AND url ="' + def.FeedUrl + '" LIMIT ' + def.MaxCount;
+        let parser = new RSSParser();
 
-        $.ajax({
-            url: "https://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(YQLstr) + "&format=json&diagnostics=false&callback=?",
-            dataType: "json",
-            success: function (data) {
-                $("#" + id).empty();
-                if (!(data.query.results.rss instanceof Array)) {
-                    data.query.results.rss = [data.query.results.rss];
+        parser.parseURL(def.FeedUrl, function(err, feed) {
+            $("#" + id).empty(); 
+            feed.items.slice(0, def.MaxCount).forEach(function(entry) { 
+                s += '<li><div class="itemTitle"><a href="' + entry.link + '" target="' + def.TitleLinkTarget + '" >' + entry.title + '</a></div>';
+                
+                if (def.ShowPubDate){
+                    dt = new Date(entry.pubDate);
+                    s += '<div class="itemDate">';
+                    if ($.trim(def.DateFormat).length > 0) {
+                        try {
+                            moment.lang(def.DateFormatLang);
+                            s += moment(dt).format(def.DateFormat);
+                        }
+                        catch (e){s += dt.toLocaleDateString();}                            
+                    }
+                    else {
+                        s += dt.toLocaleDateString();
+                    }
+                    s += '</div>';
                 }
-                $.each(data.query.results.rss, function (e, itm) {
-                    s += '<li><div class="itemTitle"><a href="' + itm.channel.item.link + '" target="' + def.TitleLinkTarget + '" >' + itm.channel.item.title + '</a></div>';
-                    
-                    if (def.ShowPubDate){
-                        dt = new Date(itm.channel.item.pubDate);
-                        s += '<div class="itemDate">';
-                        if ($.trim(def.DateFormat).length > 0) {
-                            try {
-                                moment.lang(def.DateFormatLang);
-                                s += moment(dt).format(def.DateFormat);
-                            }
-                            catch (e){s += dt.toLocaleDateString();}                            
-                        }
-                        else {
-                            s += dt.toLocaleDateString();
-                        }
-                        s += '</div>';
+                if (def.ShowDesc) {
+                    s += '<div class="itemContent">';
+                    if (def.DescCharacterLimit > 0 && entry.description.length > def.DescCharacterLimit) {
+                        s += entry.description.substring(0, def.DescCharacterLimit) + '...';
                     }
-                    if (def.ShowDesc) {
-                        s += '<div class="itemContent">';
-                         if (def.DescCharacterLimit > 0 && itm.channel.item.description.length > def.DescCharacterLimit) {
-                            s += itm.channel.item.description.substring(0, def.DescCharacterLimit) + '...';
-                        }
-                        else {
-                            s += itm.channel.item.description;
-                         }
-                         s += '</div>';
+                    else {
+                        s += entry.description;
                     }
-                });
-                $("#" + id).append('<ul class="feedEkList">' + s + '</ul>');
-            }
+                    s += '</div>';
+                }; 
+            });
+            $("#" + id).append('<ul class="feedEkList">' + s + '</ul>');
         });
     };
 })(jQuery);
