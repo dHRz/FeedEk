@@ -5,6 +5,7 @@ FeedEk jQuery RSS/ATOM Feed Plugin
 
 You can obtain feeds easily from any domain. No need for server-side scripts.
 
+**Note:** This fork was made for personal use, as I don't want to use YQL. [Rss-parser](https://github.com/bobby-brennan/rss-parser) is required.
 
 [Plugin Homepage](https://jquery-plugins.net/FeedEk/FeedEk.html)
 
